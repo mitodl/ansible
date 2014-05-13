@@ -124,6 +124,12 @@ options:
         - A list of security groups to which the VM should be added
         required: false
         default: None
+    availability_zone:
+       version_added: "1.6"
+       description:
+          - The name of the availability zone to which the VM should be added
+       required: false
+       default: None
     nics:
         description:
         - A list of network id's to which the VM's interface should be attached
@@ -231,6 +237,7 @@ def create_server(module, nova, image_id, flavor_id):
         'meta': module.params['meta'],
         'key_name': module.params['key_name'],
         'security_groups': security_groups,
+        'availability_zone': module.params['availability_zone'],
         'userdata': module.params['user_data'],
     }
 
@@ -325,6 +332,7 @@ def main():
         flavor_name=dict(default=None),
         key_name=dict(default=None),
         security_groups=dict(default='default'),
+        availability_zone=dict(default=None),
         nics=dict(default=None),
         meta=dict(default=None),
         volumes=dict(default=None),
