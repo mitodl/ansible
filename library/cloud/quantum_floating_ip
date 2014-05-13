@@ -80,6 +80,8 @@ EXAMPLES = '''
 '''
 
 
+
+
 def create_floating_ip(module, neutron, port_id, network_id):
     try:
         result = neutron.create_floatingip({'floatingip': {
@@ -107,30 +109,6 @@ def delete_floating_ip(module, neutron, floating_ip_id):
     except Exception, e:
         module.fail_json(
             msg="There was an error in updating the floating ip address: %s" % e.message)
-
-
-def main():
-    fixed_ip, port_id = _get_port_info(
-        neutron, module, server_info['id'], module.params['internal_network_name'])
-    if not port_id:
-        module.fail_json(
-            msg="Cannot find a port for this instance, maybe fixed ip is not assigned")
-
-    floating_id, floating_ip = _get_floating_ip(module, neutron, fixed_ip)
-
-    if module.params['state'] == 'present':
-        if floating_ip:
-            module.exit_json(changed=False, public_ip=floating_ip)
-        net_id = _get_net_id(neutron, module)
-        if not net_id:
-            module.fail_json(
-                msg="cannot find the network specified, please check")
-        _create_floating_ip(neutron, module, port_id, net_id)
-
-    if module.params['state'] == 'absent':
-        if floating_ip:
-            _update_floating_ip(neutron, module, floating_id, None)
-        module.exit_json(changed=False)
 
 
 def main():
