@@ -147,23 +147,17 @@ def get_auth_data(module, service_type, endpoint_type=None):
 
 def get_nova_client(module):
     kwargs = os_auth_info(module)
-
     user = kwargs.pop("username")
     password = kwargs.pop("password")
-    tenant = kwargs.pop("tenant_id")
-    cacert = kwargs.pop("ca_cert")
-
-    if module.params.get('endpoint_type'):
-        kwargs['endpoint_type'] = module.params['endpoint_type']
-
+    tenant = kwargs.pop("tenant_name", '')
+    kwargs['cacert'] = kwargs.pop("ca_cert", None)
+    kwargs['endpoint_type'] = module.params.get('endpoint_type', 'publicURL')
     try:
         import novaclient.v1_1
         import novaclient.exceptions
     except ImportError:
         module.fail_json(msg="novaclient is required for this feature")
-
-    nova = novaclient.v1_1.Client(user, password, tenant, cacert=cacert,
-                                  **kwargs)
+    nova = novaclient.v1_1.Client(user, password, tenant, **kwargs)
     try:
         nova.authenticate()
     except novaclient.exceptions.Unauthorized, e:
@@ -231,10 +225,8 @@ def get_cinder_client(module):
 
     user = kwargs.pop("username")
     password = kwargs.pop("password")
-    tenant_id = kwargs.pop("tenant_id") or kwargs.pop("tenant_name")
-
-    if 'ca_cert' in kwargs:
-        kwargs['cacert'] = kwargs.pop('ca_cert')
+    kwargs['project_id'] = kwargs.pop("tenant_name", '')
+    kwargs['cacert'] = kwargs.pop('ca_cert', None)
 
     if module.params.get('endpoint_type'):
         kwargs['endpoint_type'] = module.params['endpoint_type']
@@ -245,7 +237,7 @@ def get_cinder_client(module):
     except ImportError:
         module.fail_json(msg="cinderclient is required for this feature")
 
-    cinder = cinderclient.v1.Client(user, password, tenant_id, **kwargs)
+    cinder = cinderclient.v1.Client(user, password, **kwargs)
     try:
         cinder.authenticate()
     except cinderclient.exceptions.Unauthorized, e:
