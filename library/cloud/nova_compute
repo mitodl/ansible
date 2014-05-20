@@ -257,7 +257,7 @@ def create_server(module, nova, image_id, flavor_id):
             if 'name' in volume:
                 if 'id' in volume:
                     module.fail_json(msg="id and name are mutially exclusive "
-                                         "in volumes", name=name, id=id)
+                                         "in volumes", name=volume['name'], id=volume['id'])
 
                 if volume.get('type') == 'snap':
                     volume['id'] = get_snapshot(module, name=volume['name']).id
@@ -265,7 +265,7 @@ def create_server(module, nova, image_id, flavor_id):
                     volume['id'] = get_volume(module, name=volume['name']).id
             elif 'id' not in volume:
                 module.fail_json(msg="id, name or size are required for " 
-                                     "volumes in volumes", name=name, id=id)
+                                     "volumes in volumes", name=volume['name'], id=volume['id'])
 
 
             mapping = "%s:%s:%s:%s" % (volume.get('id', ''),
