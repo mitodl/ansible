@@ -221,7 +221,8 @@ def rebuild_server(module, nova, server, image_id):
 
 
 def create_server(module, nova, image_id, flavor_id):
-    bootargs = [module.params['name'], image_id, flavor_id]
+    image = nova.images.get(image_id)
+    bootargs = [module.params['name'], image, flavor_id]
 
     security_groups = module.params['security_groups']
     security_groups = (security_groups.split(',')
@@ -251,8 +252,9 @@ def create_server(module, nova, image_id, flavor_id):
         del bootkwargs['key_name']
 
     if module.params['volumes']:
-        bdm = bootkwargs['block_device_mapping'] = {}
+        bdm = bootkwargs['block_device_mapping_v2'] = []
         device_names = iter("sda%s" % s for s in "abcdefghijklmnopqrstuvwxyz")
+        device_index = iter(list(range(1,100)))
         for volume in module.params['volumes']:
             if 'name' in volume:
                 if 'id' in volume:
@@ -267,15 +269,17 @@ def create_server(module, nova, image_id, flavor_id):
                 module.fail_json(msg="id, name or size are required for " 
                                      "volumes in volumes", name=volume['name'], id=volume['id'])
 
-
-            mapping = "%s:%s:%s:%s" % (volume.get('id', ''),
-                                       volume.get('type', 'volume'),
-                                       volume.get('size', ''),
-                                       volume.get('delete_on_termination'))
-
             device_name = volume.get('device_name') or next(device_names)
 
-            bdm[device_name] = mapping
+            bdm.append({
+                'device_name': device_name,
+                'uuid': volume.get('id', ''),
+                'source_type': volume.get('type', 'volume'),
+                'delete_on_termination': volume.get('delete_on_termination', False),
+                'volume_size': volume.get('size', None),
+                'boot_index': volume.get('boot_index', next(device_index)),
+                'destination_type': volume.get('destination_type', 'volume'),
+                })
 
     try:
         server = nova.servers.create(*bootargs, **bootkwargs)
