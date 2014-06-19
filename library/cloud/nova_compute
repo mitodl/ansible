@@ -369,7 +369,7 @@ def main():
         image_id = module.params['image_id']
     elif module.params['image_name']:
         image_id = get_glance_image(module, module.params['image_name']).id
-    elif module.param['state'] != 'absent':
+    elif module.params['state'] != 'absent':
         module.fail_json(msg="Parameter 'image_id' or 'image_name' is "
                              "required if state == 'present'")
 
