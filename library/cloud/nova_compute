@@ -221,7 +221,10 @@ def rebuild_server(module, nova, server, image_id):
 
 
 def create_server(module, nova, image_id, flavor_id):
-    image = nova.images.get(image_id)
+    if image_id:
+        image = nova.images.get(image_id)
+    else:
+        image = None
     bootargs = [module.params['name'], image, flavor_id]
 
     security_groups = module.params['security_groups']
@@ -369,8 +372,11 @@ def main():
         image_id = module.params['image_id']
     elif module.params['image_name']:
         image_id = get_glance_image(module, module.params['image_name']).id
-    elif module.params['state'] != 'absent':
-        module.fail_json(msg="Parameter 'image_id' or 'image_name' is "
+    elif module.params['volumes'] and module.params['state'] != 'rebuilt':
+        # Image is not required if volumes are used
+        image_id = None
+    elif module.params['state'] != 'absent' and module.params['volumes'] is None:
+        module.fail_json(msg="Parameter 'image_id', 'image_name', or 'volumes' is "
                              "required if state == 'present'")
 
     if module.params['flavor_name']:
