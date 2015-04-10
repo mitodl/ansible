@@ -258,7 +258,7 @@ def get_volume(module, name=None, id=None, required=True, cinder=None):
 
     try:
         if name:
-            volumes = cinder.volumes.list(search_opts={'name': name})
+            volumes = cinder.volumes.list(search_opts={'display_name': name})
             volumes = [x for x in volumes if x.display_name == name]
         elif id:
             try:
