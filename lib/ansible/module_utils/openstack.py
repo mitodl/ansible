@@ -250,7 +250,8 @@ def get_cinder_client(module):
     return cinder
 
 
-def get_volume(module, name=None, id=None, required=True, cinder=None):
+def get_volume(module, name=None, id=None, required=True, cinder=None,
+               availability_zone=None):
     if not cinder:
         cinder = get_cinder_client(module)
 
@@ -258,7 +259,10 @@ def get_volume(module, name=None, id=None, required=True, cinder=None):
 
     try:
         if name:
-            volumes = cinder.volumes.list(search_opts={'display_name': name})
+            search_opts = {'display_name': name}
+            if availability_zone:
+                search_opts['availability_zone'] = availability_zone
+            volumes = cinder.volumes.list(search_opts=search_opts)
             volumes = [x for x in volumes if x.display_name == name]
         elif id:
             try:

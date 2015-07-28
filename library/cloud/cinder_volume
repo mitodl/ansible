@@ -152,13 +152,14 @@ EXAMPLES = '''
 
 
 def create_volume(module, name, size, cinder=None, snapshot_id=None,
-                  image_id=None, volume_id=None):
+                  image_id=None, volume_id=None, availability_zone=None):
     if not cinder:
         cinder = get_cinder_client(module)
 
     volume = cinder.volumes.create(size, display_name=name,
                                    snapshot_id=snapshot_id, imageRef=image_id,
-                                   source_volid=volume_id)
+                                   source_volid=volume_id,
+                                   availability_zone=availability_zone)
 
     if module.params['wait']:
         id = volume.id
@@ -205,6 +206,7 @@ def main():
         snapshot_name=dict(default=None),
         volume_id=dict(default=None),
         volume_name=dict(default=None),
+        availability_zone=dict(default=None),
         wait=dict(default='yes', type='bool'),
         wait_for=dict(default=180),
         state=dict(default='present',
@@ -225,6 +227,7 @@ def main():
     image_id = None
     snapshot_id = None
     volume_id = None
+    availability_zone = module.params['availability_zone']
 
     if module.params['image_id']:
         image_id = module.params['image_id']
@@ -237,10 +240,11 @@ def main():
     elif module.params['volume_id']:
         volume_id = module.params['volume_id']
     elif module.params['volume_name']:
-        volume_id = get_volume(module, module.params['volume_name']).id
+        volume_id = get_volume(module, module.params['volume_name'],
+                               availability_zone=availability_zone).id
 
     volume = get_volume(module, name=module.params['name'], required=False,
-                        cinder=cinder)
+                        cinder=cinder, availability_zone=availability_zone)
 
     if module.params['state'] == 'present':
         if volume:
@@ -251,7 +255,8 @@ def main():
             size = module.params['size']
             volume = create_volume(module, module.params['name'], size,
                                    image_id=image_id, volume_id=volume_id,
-                                   snapshot_id=snapshot_id, cinder=cinder)
+                                   snapshot_id=snapshot_id, cinder=cinder,
+                                   availability_zone=availability_zone)
             module.exit_json(changed=True)
 
     elif module.params['state'] == 'absent':
